@@ -18,6 +18,27 @@ func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
 	return quotient
 }
 
+func ConvertTimeIsoToUnix(s string) (ts int64, err error) {
+	var dt time.Time
+	if dt, err = time.Parse(time.RFC3339, s); nil == err {
+		ts = dt.Unix()
+	}
+	return
+}
+
+/*
+A Duration represents the elapsed time between two instants as an int64 nanosecond count.
+type Duration int64
+
+func Since(t Time) Duration		It is shorthand for time.Now().Sub(t).
+func Until(t Time) Duration		It is shorthand for t.Sub(time.Now()).
+
+
+A Time represents an instant in time with nanosecond precision.
+Time instants can be compared using the Before, After, and Equal methods.
+The Sub method subtracts two instants, producing a Duration.
+The Add method adds a Time and a Duration, producing a Time.
+*/
 func GetSleepDuration(lower, upper int) time.Duration {
 	return time.Second * time.Duration(lower + rand.Intn(1+upper-lower))
 }
@@ -31,6 +52,7 @@ func Sleep(timeStarted time.Time, durationSleep time.Duration) {
 	}
 	//	else don't sleep
 }
+
 
 func XStringFromXInt(xi []int) []string {
 	/*	What a drag that we have create a slice of string from the slice of int
