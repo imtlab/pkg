@@ -112,28 +112,32 @@ func RecurseMkdirWhereNotExists(pParent *DirectoryTree, parentPath string) (err 
 	if finfo, err = os.Stat(parentPath); nil == err {
 		if !finfo.IsDir() {
 			err = errors.New(fmt.Sprintf("\"%v\" is not a directory", finfo))	
-			loggers.Error.Println(err)
-			return
 		}
-	} else {
-		if os.IsNotExist(err) {
-			//	create the directory
-			if err = os.Mkdir(parentPath, os.ModePerm); nil == err {	//	ModePerm FileMode = 0777 // Unix permission bits
-				//	because Mkdir doesn't give us the mode we specified due to umask...
-				if err = os.Chmod(parentPath, os.ModePerm); nil != err {
-					loggers.Error.Println(err)
-					return
-				}
-			} else {
-				loggers.Error.Println(err)
-				return
+	} else if os.IsNotExist(err) {
+		//	create the directory
+		if err = os.Mkdir(parentPath, os.ModePerm); nil == err {	//	ModePerm FileMode = 0777 // Unix permission bits
+			//	because Mkdir doesn't give us the mode we specified due to umask...
+			err = os.Chmod(parentPath, os.ModePerm)
+		} else {
+			/*	watch out for race condition: it's possible (and has happened) that another worker created
+				this directory between the time os.Stat() said it didn't exist and os.Mkdir() was executed.
+			*/
+			if "file exists" == err.(*os.PathError).Err.Error() {	//	type assertion
+				err = nil	//	don't consider this an error
 			}
 		}
 	}
 
+	if nil == err {
+		loggers.Error.Println(err)
+		return
+	}
+
 	if nil != pParent.Children {
 		for folderName, pChild := range pParent.Children {
-			err = RecurseMkdirWhereNotExists(pChild, path.Join(parentPath, folderName))	//	resurse
+			if err = RecurseMkdirWhereNotExists(pChild, path.Join(parentPath, folderName)); nil != err {	//	resurse
+				break
+			}
 		}
 	}
 	return
