@@ -122,13 +122,14 @@ func RecurseMkdirWhereNotExists(pParent *DirectoryTree, parentPath string) (err 
 			/*	watch out for race condition: it's possible (and has happened) that another worker created
 				this directory between the time os.Stat() said it didn't exist and os.Mkdir() was executed.
 			*/
-			if "file exists" == err.(*os.PathError).Err.Error() {	//	type assertion
+//			if "file exists" == err.(*os.PathError).Err.Error() {	//	type assertion
+			if os.IsExist(err) {
 				err = nil	//	don't consider this an error
 			}
 		}
 	}
 
-	if nil == err {
+	if nil != err {
 		loggers.Error.Println(err)
 		return
 	}
