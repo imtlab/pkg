@@ -14,8 +14,8 @@ var (
 )
 
 func Init(infoHandle io.Writer, warningHandle io.Writer, errorHandle io.Writer/*, traceHandle io.Writer*/) {
-	Info	= log.New(infoHandle, "INFO: ", log.Ldate|log.Ltime|log.LUTC)
-	Warning	= log.New(warningHandle, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile|log.LUTC)
-	Error	= log.New(errorHandle, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile|log.LUTC)
-//	Trace	= log.New(traceHandle, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile|log.LUTC)
+	Info	= log.New(infoHandle, "INFO: ", log.Ldate|log.Ltime/*|log.LUTC*/)
+	Warning	= log.New(warningHandle, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
+	Error	= log.New(errorHandle, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
+//	Trace	= log.New(traceHandle, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
 }
