@@ -5,7 +5,7 @@ import (
 )
 
 /*
-	Package urlquerybuilder provides a handy way to build up URL Query strings
+	Package urlquerybuilder provides a handy way to build up URL Query strings.
 */
 
 type UrlQueryProperty struct{

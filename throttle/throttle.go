@@ -7,8 +7,8 @@ import (
 )
 
 /*
-	Package throttle provides a synchronizable type with methods used to throttle service calls
-	to limit calls within any period of duration seconds.
+	Package throttle provides a synchronizable type with methods used to limit service calls
+	within any period of duration seconds.
 */
 
 type TThrottle struct {

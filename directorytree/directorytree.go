@@ -1,7 +1,7 @@
 package directorytree
 
 import (
-	"errors"
+//	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -85,7 +85,7 @@ func RecurseMkdirAllAtLeaves(pParent *DirectoryTree, parentPath string) (err err
 		var finfo os.FileInfo
 		if finfo, err = os.Stat(parentPath); nil == err {
 			if !finfo.IsDir() {
-				err = errors.New(fmt.Sprintf("\"%v\" is not a directory", finfo))	
+				err = fmt.Errorf("\"%v\" is not a directory", finfo)
 				loggers.Error.Println(err)
 				return
 			}
@@ -103,7 +103,7 @@ func RecurseMkdirAllAtLeaves(pParent *DirectoryTree, parentPath string) (err err
 			err = RecurseMkdirAllAtLeaves(pChild, path.Join(parentPath, folderName))	//	resurse
 		}
 	}
-	return 
+	return
 }
 */
 func RecurseMkdirWhereNotExists(pParent *DirectoryTree, parentPath string) (err error) {
@@ -111,7 +111,7 @@ func RecurseMkdirWhereNotExists(pParent *DirectoryTree, parentPath string) (err 
 	var finfo os.FileInfo
 	if finfo, err = os.Stat(parentPath); nil == err {
 		if !finfo.IsDir() {
-			err = errors.New(fmt.Sprintf("\"%v\" is not a directory", finfo))	
+			err = fmt.Errorf("\"%v\" is not a directory", finfo)
 		}
 	} else if os.IsNotExist(err) {
 		//	create the directory

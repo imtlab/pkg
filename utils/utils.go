@@ -1,6 +1,7 @@
 package utils
 
 import (
+//	"fmt"
 	"math/rand"
 	"time"
 	"strconv"
@@ -39,8 +40,8 @@ Time instants can be compared using the Before, After, and Equal methods.
 The Sub method subtracts two instants, producing a Duration.
 The Add method adds a Time and a Duration, producing a Time.
 */
-func GetSleepDuration(lower, upper int) time.Duration {
-	return time.Second * time.Duration(lower + rand.Intn(1+upper-lower))
+func GetSleepDuration(unit time.Duration, lower int, upper int) time.Duration {
+	return unit * time.Duration(lower + rand.Intn(1+upper-lower))
 }
 
 func Sleep(timeStarted time.Time, durationSleep time.Duration) {
@@ -65,6 +66,43 @@ func XStringFromXInt(xi []int) []string {
 	}
 	return xs
 }
+
+
+/*	Returns the string starting at rune having index = runeIndexLow, and rune length no greater than runeLengthLimit.
+	Pass runeLengthLimit = 0 for no limit.
+*/
+func Substring(strInput string, runeIndexLow uint, runeLengthLimit uint) (strOutput string, runeLengthOutput uint) {
+	xRunesInput		:= []rune(strInput)
+	runeLengthInput	:= uint(len(xRunesInput))
+
+	if runeIndexLow < runeLengthInput {
+		runeIndexHigh := runeIndexLow + runeLengthLimit
+
+		if 0 == runeLengthLimit || runeLengthInput < runeIndexHigh {
+			//	the limit will not be applied either because it's 0 or the input string is too short
+			runeIndexHigh		= runeLengthInput
+			runeLengthOutput	= runeLengthInput - runeIndexLow
+		} else {
+			//	the input string is long enough that the limit will be applied
+			runeLengthOutput	= runeLengthLimit
+		}
+
+/*		fmt.Printf("@@@ DEBUG: runeLengthInput = %v; runeLengthOutput = %v\n", runeLengthInput, runeLengthOutput)
+		fmt.Printf("@@@ DEBUG: [%v : %v : %v]\n", runeIndexLow, runeIndexHigh, runeIndexHigh)
+*/
+
+		/*	Convert back to string from rune slice.
+			Slice indexing syntax: [low_index : high_index : optional_max]
+				The resulting slice includes the element at low_index, but excludes the element at high_index.
+				The third parameter, optional_max, sets the capacity of the resulting slice to (optional_max - low_index).
+				By default it will be (cap(xRunesInput) - low_index).
+		*/
+		strOutput = string(xRunesInput[runeIndexLow : runeIndexHigh : runeIndexHigh])
+	}
+
+	return
+}
+
 
 /*
 func getPaths() {
