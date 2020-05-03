@@ -2,9 +2,11 @@ package utils
 
 import (
 //	"fmt"
+	"math"
 	"math/rand"
 	"time"
 	"strconv"
+	"strings"
 )
 
 /*
@@ -70,6 +72,10 @@ func XStringFromXInt(xi []int) []string {
 
 /*	Returns the string starting at rune having index = runeIndexLow, and rune length no greater than runeLengthLimit.
 	Pass runeLengthLimit = 0 for no limit.
+	Important: The length returned is merely the number of runes that were extracted from strInput,
+	potentially used for decision making by the caller.  Due to the final call to strings.TrimSpace()
+	it is not necessarily the rune length of the returned string and certainly not to be construed as
+	the byte length of the returned string.
 */
 func Substring(strInput string, runeIndexLow uint, runeLengthLimit uint) (strOutput string, runeLengthOutput uint) {
 	xRunesInput		:= []rune(strInput)
@@ -97,12 +103,29 @@ func Substring(strInput string, runeIndexLow uint, runeLengthLimit uint) (strOut
 				The third parameter, optional_max, sets the capacity of the resulting slice to (optional_max - low_index).
 				By default it will be (cap(xRunesInput) - low_index).
 		*/
-		strOutput = string(xRunesInput[runeIndexLow : runeIndexHigh : runeIndexHigh])
+		strOutput = strings.TrimSpace(string(xRunesInput[runeIndexLow : runeIndexHigh : runeIndexHigh]))
 	}
 
 	return
 }
 
+/*	Determine the number of digits consumed by an unsigned integer.  This is useful for determining
+	the number of characters to reserve for such things as an incrementing numeric suffix, etc.
+*/
+func DigitCount(value uint) (digitCount uint) {
+	if 0 == value {
+		digitCount = 1
+	} else {
+		//	Mathmatica: 1 + Floor[Log10[value]]
+		//func Log10(x float64) float64
+		//func Floor(x float64) float64
+		//	No need for math.Floor(). Truncation occurs during the conversion from float64 to uint
+//		digitCount = 1 + uint(math.Floor(math.Log10(float64(value))))
+		digitCount = 1 + uint(math.Log10(float64(value)))
+	}
+
+	return
+}
 
 /*
 func getPaths() {
