@@ -109,6 +109,26 @@ func Substring(strInput string, runeIndexLow uint, runeLengthLimit uint) (strOut
 	return
 }
 
+//	Returns a string composed of the trailing runeLengthLimit runes from strInput.
+func SubstringFromEnd(strInput string, runeLengthLimit uint) (strOutput string) {
+	if 0 != runeLengthLimit {
+		xRunesInput		:= []rune(strInput)
+		runeLengthInput	:= uint(len(xRunesInput))
+
+		if runeLengthInput > runeLengthLimit {
+			//	the input string is long enough that the limit will be applied
+			runeIndexLow := runeLengthInput - runeLengthLimit
+			//	Convert back to string from rune slice.
+			strOutput = strings.TrimSpace(string(xRunesInput[runeIndexLow : runeLengthInput]))
+		} else {
+			strOutput = strInput
+		}
+	}
+
+	return
+}
+
+
 /*	Determine the number of digits consumed by an unsigned integer.  This is useful for determining
 	the number of characters to reserve for such things as an incrementing numeric suffix, etc.
 */
