@@ -4,6 +4,7 @@ import (
 //	"fmt"
 	"math"
 	"math/rand"
+	"path"
 	"time"
 	"strconv"
 	"strings"
@@ -59,7 +60,7 @@ func Sleep(timeStarted time.Time, durationSleep time.Duration) {
 
 func XStringFromXInt(xi []int) []string {
 	/*	What a drag that we have create a slice of string from the slice of int
-		If only there was a strings.Join(a []interface{}, sep string) string that would internally call the interface's String() method.
+		If only there was a strings.Join(a []interface{}, sep string) that would internally call the interface's String() method.
 	*/
 	//	Create a string slice using strconv.Itoa().  Itoa is shorthand for FormatInt(int64(i), 10).
 	xs := make([]string, 0, len(xi))
@@ -145,6 +146,25 @@ func DigitCount(value uint) (digitCount uint) {
 	}
 
 	return
+}
+
+func BaseName(fn string, extLimit int) string {
+//func BaseName(fullPath string, extLimit int) {
+	/*	To guard against goofy filenames like "Mr. Smith Goes to Washington" where a human would say
+		there is no extension, but path.Ext() would return ". Smith Goes to Washington" as the extension;
+		This method will suppress removing any "extension" longer than extLimit.
+	*/
+//	fn	:= path.Base(fullPath)
+	/*	Ext returns the file name extension used by path.
+		The extension is the suffix beginning at the final dot in the final slash-separated element of path;
+		it is empty if there is no dot.
+	*/
+	ext	:= path.Ext(fn)
+	extLen := len(ext)
+	if (0 == extLen) || (extLimit < extLen) {
+		return fn
+	}
+	return fn[0:len(fn)-extLen]
 }
 
 /*
