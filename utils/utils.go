@@ -149,12 +149,10 @@ func DigitCount(value uint) (digitCount uint) {
 }
 
 func BaseName(fn string, extLimit int) string {
-//func BaseName(fullPath string, extLimit int) {
 	/*	To guard against goofy filenames like "Mr. Smith Goes to Washington" where a human would say
 		there is no extension, but path.Ext() would return ". Smith Goes to Washington" as the extension;
 		This method will suppress removing any "extension" longer than extLimit.
 	*/
-//	fn	:= path.Base(fullPath)
 	/*	Ext returns the file name extension used by path.
 		The extension is the suffix beginning at the final dot in the final slash-separated element of path;
 		it is empty if there is no dot.
@@ -165,6 +163,19 @@ func BaseName(fn string, extLimit int) string {
 		return fn
 	}
 	return fn[0:len(fn)-extLen]
+}
+
+func Extension(fn string, extLimit int) string {
+	/*	To guard against goofy filenames like "Mr. Smith Goes to Washington" where a human would say
+		there is no extension, but path.Ext() would return ". Smith Goes to Washington" as the extension;
+		This method will suppress returning any "extension" longer than extLimit.
+	*/
+	ext	:= path.Ext(fn)
+	extLen := len(ext)
+	if (0 == extLen) || (extLimit < extLen) {
+		return ""
+	}
+	return ext
 }
 
 /*
