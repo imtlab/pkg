@@ -1,8 +1,5 @@
+//	Package excel provides utility functions for working with Excel files.
 package excel
-
-/*
-	Package excel contains utility functions for working with Excel files.
-*/
 
 const (
 	KColumnIndicatorBase = 1 + 'Z' - 'A'	//	yields 26

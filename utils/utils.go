@@ -178,6 +178,27 @@ func Extension(fn string, extLimit int) string {
 	return ext
 }
 
+func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
+	/*	To guard against goofy filenames like "Mr. Smith Goes to Washington" where a human would say
+		there is no extension, but path.Ext() would return ". Smith Goes to Washington" as the extension;
+		This method will suppress any "extension" longer than extLimit.
+	*/
+	/*	Ext returns the file name extension used by path.
+		The extension is the suffix beginning at the final dot in the final slash-separated element of path;
+		it is empty if there is no dot.
+	*/
+	extension = path.Ext(filename)
+	extLen := len(extension)
+	if (0 == extLen) || (extLimit < extLen) {
+		baseName = filename
+		extension = ""
+	} else {
+		baseName = filename[0:len(filename)-extLen]
+	}
+	return
+}
+
+
 /*
 func getPaths() {
 	//	check existence of source dir (and make sure it's a directory).
