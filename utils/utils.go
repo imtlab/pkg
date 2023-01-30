@@ -1,7 +1,7 @@
 package utils
 
 import (
-//	"fmt"
+	"fmt"
 	"math"
 	"math/rand"
 	"path"
@@ -198,6 +198,38 @@ func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
 	return
 }
 
+/*
+func BuildMapStringKeyToIndex(xKeys []string) (mKeyToIndex map[string]int, err error) {
+	mKeyToIndex = make(map[string]int)
+
+	for index := range xKeys {
+		key := xKeys[index]
+		if _, present := mKeyToIndex[key]; present {
+			err = fmt.Errorf(`Key "%s" appears more than once`, key)
+		} else {
+			mKeyToIndex[key] = index
+		}
+	}
+
+	return
+}
+*/
+//	Generic version
+//	See https://tip.golang.org/ref/spec#Type_parameter_declarations
+func BuildMapKeyToIndex[T comparable](xKeys []T) (mKeyToIndex map[T]int, err error) {
+	mKeyToIndex = make(map[T]int)
+
+	for index := range xKeys {
+		key := xKeys[index]
+		if _, present := mKeyToIndex[key]; present {
+			err = fmt.Errorf(`Key "%v" appears more than once`, key)
+		} else {
+			mKeyToIndex[key] = index
+		}
+	}
+
+	return
+}
 
 /*
 func getPaths() {
