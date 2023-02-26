@@ -1,3 +1,3 @@
 module github.com/imtlab/pkg/utils
 
-go 1.18
+go 1.20
