@@ -2,10 +2,8 @@ package envvars
 
 import (
 	"encoding/base64"
-//	"errors"
 	"fmt"
 	"os"
-//	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -97,7 +95,7 @@ type tEnvVar struct {
 	Encrypted	bool
 }
 
-func (p *tEnvVar) decrypt(key string, pKMS *kms.KMS, encryptionContext aws.StringMap) (err error) {
+func (p *tEnvVar) decrypt(key string, pKMS *kms.KMS, encryptionContext map[string]*string) (err error) {
 	//func (enc *Encoding) DecodeString(s string) ([]byte, error)
 	var xDecodedBytes []byte
 	if xDecodedBytes, err = base64.StdEncoding.DecodeString(p.Ciphertext); nil == err {
