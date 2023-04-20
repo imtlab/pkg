@@ -11,32 +11,29 @@ import (
 	"github.com/aws/aws-sdk-go/service/kms"
 )
 
-/*	Package `envvars` encapsulates common lambda function initialization tasks such as making sure
-	all required environment variables are present and decrypting any that are encrypted.
+/*
+###	Description:
+Package `envvars` encapsulates common lambda function initialization tasks such as making sure
+all required environment variables are present and decrypting any that are encrypted.
 
-Sample usage:
+###	Notes:
+The AWS lambda runtime sets several environment variables during initialization that this package references
+if Encrypted = true for any of the tEnvVars added to the TEnvVarMap:
+	AWS_LAMBDA_FUNCTION_NAME
+	AWS_DEFAULT_REGION	The default AWS Region where the Lambda function is executed.
+	AWS_REGION			The AWS Region where the Lambda function is executed. If defined, this value overrides AWS_DEFAULT_REGION.
+(See https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime)
+
+### Sample usage:
 Suppose you have defined these environment variables in the AWS lambda function:
-	Name				security
-	----				--------
-AWS
-	awsLambdaFuncName	plaintext
-	awsRegion			plaintext
-SQL Server
-	sqlHost				plaintext
-	sqlUsername			plaintext
-	sqlPassword			ENCRYPTED
+Name		security
+----		--------
+sqlHost		plaintext
+sqlUsername	plaintext
+sqlPassword	ENCRYPTED
 
-Note:
-	The reason for awsLambdaFuncName and awsRegion is that when encryption is used, the policy in
-	the lambda function's execution role references its name, and the region is used to establish the KMS client.
-	There's not a trivial way of acquiring these values programmatically, and if we hardcode them
-	then we have to change the code and rebuild whenever we change the lambda function name or region in AWS.
-	So making these environment variables seems a reasonable solution.
-
-	The downside is that since KAwsRegion and kAwsLambdaFuncName are defined in this package, those 2
-	environment variables as defined in the lambda function will have to match the spelling and casing exactly.
-
-Init()
+In the init() of your main package:
+init() {
 	const (
 		kSqlHost		= `sqlHost`
 		kSqlUsername	= `sqlUsername`
@@ -75,15 +72,10 @@ Init()
 	if err = sqlserver.Init(pConfigSqlServer); nil != err {
 		log.Panicf(`sqlserver.Init() returned error: %v`, err)
 	}
-}//init()
+}
 */
 
 //\\//	package-scope constants and variables
-
-const (
-	KAwsRegion			= `awsRegion`
-	kAwsLambdaFuncName	= `awsLambdaFuncName`
-)
 
 
 //\\//	type definitions (and attached methods)
@@ -99,9 +91,19 @@ func (p *tEnvVar) decrypt(key string, pKMS *kms.KMS, encryptionContext map[strin
 	//func (enc *Encoding) DecodeString(s string) ([]byte, error)
 	var xDecodedBytes []byte
 	if xDecodedBytes, err = base64.StdEncoding.DecodeString(p.Ciphertext); nil == err {
-		pDecryptInput := &kms.DecryptInput {
-			CiphertextBlob: xDecodedBytes,
-			EncryptionContext: encryptionContext,
+		/*	NOTE:
+			According to the kms package documentation at https://pkg.go.dev/github.com/aws/aws-sdk-go/service/kms#DecryptInput
+			EncryptionContext is "optional, but it is strongly recommended".
+			But it says essentially the same thing about the KeyId struct field.  To Wit:
+				If you used a symmetric encryption KMS key, KMS can get the KMS key from metadata
+				that it adds to the symmetric ciphertext blob.  However, it is always recommended
+				as a best practice.  This practice ensures that you use the KMS key that you intend.
+			Yet the sample code in the "Decrypt secrets snippet" (provided by the AWS Lamba Function
+			configuration UI when encrypting the environment variables) doesn't include KeyId.
+		*/
+		pDecryptInput := &kms.DecryptInput{
+			CiphertextBlob:		xDecodedBytes,
+			EncryptionContext:	encryptionContext,
 		}
 
 		//func (c *KMS) Decrypt(input *DecryptInput) (*DecryptOutput, error)
@@ -132,15 +134,13 @@ func (m TEnvVarMap) Add(key string, /*required, */encrypted bool) (err error) {
 	return
 }
 
-func (m TEnvVarMap) addIfNotPresent(key string, /*required, */encrypted bool) {
-	if _, present := m[key]; !present {
-		m[key] = newEnvVar(key, encrypted)
-	}
-
-	return
-}
-
 func (m TEnvVarMap) Validate() (err error) {
+	const (
+		kAwsLambdaFuncName	= `AWS_LAMBDA_FUNCTION_NAME`
+		kAwsDefaultRegion	= `AWS_DEFAULT_REGION`	//	presumably always populated?
+		kAwsRegion			= `AWS_REGION`			//	presumably optional?
+	)
+
 	var needsEncryption bool
 
 	//	first determine if encryption is needed
@@ -149,12 +149,6 @@ func (m TEnvVarMap) Validate() (err error) {
 			needsEncryption = true
 			break
 		}
-	}
-
-	//	if so, then Add KAwsRegion and kAwsLambdaFuncName
-	if needsEncryption {
-		m.addIfNotPresent(kAwsLambdaFuncName, false)
-		m.addIfNotPresent(KAwsRegion, false)
 	}
 
 	xMissing := make([]string, 0, len(m))
@@ -175,33 +169,47 @@ func (m TEnvVarMap) Validate() (err error) {
 		if needsEncryption {
 			//	decrypt the encrypted environment variables
 
-			//	yeschiree there's a seschschion in seschschion
-			pSession		:= session.Must(session.NewSession())
-			pConfigRegion	:= aws.NewConfig().WithRegion(m[KAwsRegion].Plaintext)
+			//	We'll need awsRegion for our session, and awsLambdaFuncName for the encryptionContext.
+			var awsRegion, awsLambdaFuncName string
 
-			//func New(p client.ConfigProvider, cfgs ...*aws.Config) *KMS
-			//	Create a KMS client from just a session.
-//			pKMS			:= kms.New(pSession)
-			//	Create a KMS client with additional configuration
-			pKMS			:= kms.New(pSession, pConfigRegion)
+			if awsRegion = os.Getenv(kAwsRegion); 0 == len(awsRegion) {
+				if awsRegion = os.Getenv(kAwsDefaultRegion); 0 == len(awsRegion) {
+					xMissing = append(xMissing, kAwsDefaultRegion)
+				}
+			}
 
-			encryptionContext := aws.StringMap(map[string]string{`LambdaFunctionName`: m[kAwsLambdaFuncName].Plaintext})
+			if awsLambdaFuncName = os.Getenv(kAwsLambdaFuncName); 0 == len(awsRegion) {
+				xMissing = append(xMissing, kAwsLambdaFuncName)
+			}
 
-			//	range over the map to decrypt the items requiring it
-			for key, pEnvVar := range m {
-				if pEnvVar.Encrypted {
-					if err = pEnvVar.decrypt(key, pKMS, encryptionContext); nil != err {
-						break
+			if 0 == len(xMissing) {
+				//	yeschiree there's a seschschion in seschschion
+				pSession		:= session.Must(session.NewSession())
+				pConfigRegion	:= aws.NewConfig().WithRegion(awsRegion)
+				//func New(p client.ConfigProvider, cfgs ...*aws.Config) *KMS
+				//	Create a KMS client with additional configuration
+				pKMS			:= kms.New(pSession, pConfigRegion)
+
+				encryptionContext := aws.StringMap(map[string]string{`LambdaFunctionName`: awsLambdaFuncName})
+
+				//	range over the map to decrypt the items requiring it
+				for key, pEnvVar := range m {
+					if pEnvVar.Encrypted {
+						if err = pEnvVar.decrypt(key, pKMS, encryptionContext); nil != err {
+							break
+						}
 					}
 				}
+			} else {
+				err = fmt.Errorf(`Missing lambda runtime environemnt variables: %s`, strings.Join(xMissing, `, `))
 			}
 		}//needsEncryption
 	} else {
-		err = fmt.Errorf(`Missing environemnt variables: %s`, strings.Join(xMissing, `, `))
+		err = fmt.Errorf(`Missing configured environemnt variables: %s`, strings.Join(xMissing, `, `))
 	}
 
 	return
-}
+}//Validate()
 
 
 //\\//	functions
