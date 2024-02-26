@@ -3,6 +3,7 @@ package envvars
 import (
 	"encoding/base64"
 	"fmt"
+//	"log"	//	only used if lines marked DEBUG are uncommented
 	"os"
 	"strings"
 
@@ -106,9 +107,13 @@ func (p *tEnvVar) decrypt(key string, pKMS *kms.KMS, encryptionContext map[strin
 			EncryptionContext:	encryptionContext,
 		}
 
+//		log.Println(`Calling pKMS.Decrypt()`)											//<<<<	DEBUG
+
 		//func (c *KMS) Decrypt(input *DecryptInput) (*DecryptOutput, error)
 		var pDecryptOutput *kms.DecryptOutput
 		if pDecryptOutput, err = pKMS.Decrypt(pDecryptInput); nil == err {
+//		log.Println(`Exited pKMS.Decrypt()`)											//<<<<	DEBUG
+
 			//	Plaintext is a byte array, so convert to string
 			p.Plaintext = string(pDecryptOutput.Plaintext[:])
 		} else {
@@ -194,6 +199,7 @@ func (m TEnvVarMap) Validate() (err error) {
 
 				//	range over the map to decrypt the items requiring it
 				for key, pEnvVar := range m {
+//					log.Printf(`key = %s; Encrypted = %v`, key, pEnvVar.Encrypted)		//<<<<	DEBUG
 					if pEnvVar.Encrypted {
 						if err = pEnvVar.decrypt(key, pKMS, encryptionContext); nil != err {
 							break

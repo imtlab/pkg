@@ -1,3 +1,6 @@
+/*	Package throttle provides a synchronizable type with methods used to limit service calls
+	within any period of duration seconds.
+*/
 package throttle
 
 import (
@@ -5,11 +8,6 @@ import (
 	"sync"
 	"time"
 )
-
-/*
-	Package throttle provides a synchronizable type with methods used to limit service calls
-	within any period of duration seconds.
-*/
 
 type TThrottle struct {
 	sync.Mutex

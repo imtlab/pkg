@@ -1,3 +1,4 @@
+//	Package utils contains handy commonly used utility functions.
 package utils
 
 import (
@@ -9,10 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-/*
-	Package utils contains handy commonly used utility functions.
-*/
 
 func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
 	quotient := itemCount / maxIndicatorCount
@@ -57,7 +54,6 @@ func Sleep(timeStarted time.Time, durationSleep time.Duration) {
 	//	else don't sleep
 }
 
-
 func XStringFromXInt(xi []int) []string {
 	/*	What a drag that we have create a slice of string from the slice of int
 		If only there was a strings.Join(a []interface{}, sep string) that would internally call the interface's String() method.
@@ -69,7 +65,6 @@ func XStringFromXInt(xi []int) []string {
 	}
 	return xs
 }
-
 
 /*	Returns the string starting at rune having index = runeIndexLow, and rune length no greater than runeLengthLimit.
 	Pass runeLengthLimit = 0 for no limit.
@@ -97,7 +92,6 @@ func Substring(strInput string, runeIndexLow uint, runeLengthLimit uint) (strOut
 /*		fmt.Printf("@@@ DEBUG: runeLengthInput = %v; runeLengthOutput = %v\n", runeLengthInput, runeLengthOutput)
 		fmt.Printf("@@@ DEBUG: [%v : %v : %v]\n", runeIndexLow, runeIndexHigh, runeIndexHigh)
 */
-
 		/*	Convert back to string from rune slice.
 			Slice indexing syntax: [low_index : high_index : optional_max]
 				The resulting slice includes the element at low_index, but excludes the element at high_index.
@@ -129,7 +123,6 @@ func SubstringFromEnd(strInput string, runeLengthLimit uint) (strOutput string) 
 	return
 }
 
-
 /*	Determine the number of digits consumed by an unsigned integer.  This is useful for determining
 	the number of characters to reserve for such things as an incrementing numeric suffix, etc.
 */
@@ -137,7 +130,7 @@ func DigitCount(value uint) (digitCount uint) {
 	if 0 == value {
 		digitCount = 1
 	} else {
-		//	Mathmatica: 1 + Floor[Log10[value]]
+		//	Mathematica: 1 + Floor[Log10[value]]
 		//func Log10(x float64) float64
 		//func Floor(x float64) float64
 		//	No need for math.Floor(). Truncation occurs during the conversion from float64 to uint
@@ -229,6 +222,17 @@ func BuildMapKeyToIndex[T comparable](xKeys []T) (mKeyToIndex map[T]int, err err
 	}
 
 	return
+}
+
+/*	helper for encoding.csv
+	When reading from a file encoded as UTF-8 + BOM, the BOM is read in as part of csvRecord[0],
+	so it needs to be removed.
+*/
+func RemoveBOM(csvRecord []string) {
+	xRunes := []rune(csvRecord[0])
+	if '\ufeff' == xRunes[0] {
+		csvRecord[0] = string(xRunes[1:])
+	}
 }
 
 /*

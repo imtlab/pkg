@@ -1,12 +1,9 @@
+//	Package urlquerybuilder provides a handy way to build up URL Query strings.
 package urlquerybuilder
 
 import (
 	"strings"
 )
-
-/*
-	Package urlquerybuilder provides a handy way to build up URL Query strings.
-*/
 
 type UrlQueryProperty struct{
 	/*	Note: Key and Value must be exported because to supply a UrlQueryProperty struct literal
