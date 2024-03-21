@@ -4,6 +4,7 @@ package utils
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"math/rand"
 	"path"
 	"time"
@@ -191,6 +192,46 @@ func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
 	return
 }
 
+func ErrorsToMessages(xerr []error) (xMessages []string) {
+	xMessages = make([]string, len(xerr))
+	for index := range xerr {
+		/*	For the standard Go compiler, the internal structure of any string type is declared like:
+			type _string struct {
+				elements	*byte	//	underlying bytes
+				len			int		//	number of bytes
+			}
+		I'm guessing that when assigning one string variable to another,
+		its struct is copied with its elements field still pointing to the source string's byte array.
+		As strings are immutable, that array will never be modified.  A new array is allocated
+		only when a new value is assigned to a string.  So I expect that the following assignment
+		does not cause all the bytes in the string's array to be duplicated in memory.
+		*/
+		xMessages[index] = xerr[index].Error()
+	}
+
+	return
+}
+
+func IsExactUint64(f64 float64) (value uint64, exact bool) {
+	pBigRat := new(big.Rat)
+	//func (z *Rat) SetFloat64(f float64) *Rat
+	pBigRat.SetFloat64(f64)
+
+	//func (x *Int) IsUint64() bool
+	if pBigRat.Denom().IsUint64() {
+		//func (x *Int) Uint64() uint64
+		if denom := pBigRat.Denom().Uint64(); 1 == denom {
+			exact = true
+			value = pBigRat.Num().Uint64()
+		}
+	}
+	//	else leave value = 0, exact = false
+
+	return
+}
+
+//\\//	helpers for encoding/csv
+
 /*
 func BuildMapStringKeyToIndex(xKeys []string) (mKeyToIndex map[string]int, err error) {
 	mKeyToIndex = make(map[string]int)
@@ -224,8 +265,7 @@ func BuildMapKeyToIndex[T comparable](xKeys []T) (mKeyToIndex map[T]int, err err
 	return
 }
 
-/*	helper for encoding.csv
-	When reading from a file encoded as UTF-8 + BOM, the BOM is read in as part of csvRecord[0],
+/*	When reading from a file encoded as UTF-8 + BOM, the BOM is read in as part of csvRecord[0],
 	so it needs to be removed.
 */
 func RemoveBOM(csvRecord []string) {
@@ -234,6 +274,7 @@ func RemoveBOM(csvRecord []string) {
 		csvRecord[0] = string(xRunes[1:])
 	}
 }
+
 
 /*
 func getPaths() {
