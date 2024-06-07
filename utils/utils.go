@@ -10,6 +10,8 @@ import (
 	"time"
 	"strconv"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
 
 func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
@@ -34,7 +36,6 @@ type Duration int64
 
 func Since(t Time) Duration		It is shorthand for time.Now().Sub(t).
 func Until(t Time) Duration		It is shorthand for t.Sub(time.Now()).
-
 
 A Time represents an instant in time with nanosecond precision.
 Time instants can be compared using the Before, After, and Equal methods.
@@ -228,6 +229,24 @@ func IsExactUint64(f64 float64) (value uint64, exact bool) {
 	//	else leave value = 0, exact = false
 
 	return
+}
+
+/*
+func EuclidGCD(p, q uint) uint {
+	for 0 != q {
+		p, q = q, p % q
+	}
+
+	return p
+}
+*/
+//	Generic version
+func EuclidGCD[T constraints.Integer](p, q T) T {
+	for 0 != q {
+		p, q = q, p % q
+	}
+
+	return p
 }
 
 //\\//	helpers for encoding/csv

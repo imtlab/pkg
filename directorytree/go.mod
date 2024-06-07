@@ -1,3 +1,3 @@
 module github.com/imtlab/pkg/directorytree
 
-go 1.20
+go 1.21
