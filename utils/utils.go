@@ -249,6 +249,14 @@ func EuclidGCD[T constraints.Integer](p, q T) T {
 	return p
 }
 
+func Plural[T constraints.Integer](count T) (plural string) {
+	if 1 != count {
+		plural = `s`
+	}
+
+	return
+}
+
 //\\//	helpers for encoding/csv
 
 /*
