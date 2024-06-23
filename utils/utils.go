@@ -10,8 +10,12 @@ import (
 	"time"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"golang.org/x/exp/constraints"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
@@ -124,6 +128,171 @@ func SubstringFromEnd(strInput string, runeLengthLimit uint) (strOutput string) 
 
 	return
 }
+
+/*	Homegrown CamelCase function:
+I supposed a good camelCase function would be trivially easy to find, possibly even in the standard library.
+But I could only find 3rd party packages posted by unknowns, and upon inspection of their code, they all were rather flawed.
+Either they operated on the bytes of the string rather than the runes (and thus would fail when non-ASCII characters are used),
+or they considered only 4 specific (ASCII) characters as characters to be removed, rather than _any_ punctuation, non-printables,
+and a zillion other things that would not be a valid symbolic name in Java.  So I guess I have to write my own.
+*/
+func isAscii(r rune) bool {
+	//	type rune = int32
+	//	range [00000000, 00000080) Basic Latin aka ASCII
+//	return (r < '\x80')				//	rune(128)
+	return (r <= unicode.MaxASCII)	//	'\u007F'
+}
+
+func removeDiacritics(in string) (out string, err error) {
+	/*
+	See	https://stackoverflow.com/questions/26722450/remove-diacritics-using-go
+	transform.RemoveFunc is deprecated, it is prefer to use runes.Remove(runes.In(unicode.Mn))
+	*/
+	/*	from unicode
+		unicode.Mn	= The set of Unicode characters in category Mn (Mark, Nonspacing)	https://www.fileformat.info/info/unicode/category/Mn/index.htm
+	*/
+	/*	from golang.org/x/text/transform
+		type Transformer interface {
+			Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error)
+			Reset()
+		}
+		func String(t Transformer, s string) (result string, n int, err error)
+		func Chain(t ...Transformer) Transformer
+	*/
+	/*	from golang.org/x/text/runes
+		type Set interface {
+			Contains(r rune) bool	//	Contains returns true if r is contained in the set.
+		}
+		type Transformer struct {}	//	Transformer implements the transform.Transformer interface.
+		func Remove(s Set) Transformer
+	*/
+	/*	from golang.org/x/text/unicode/norm
+	type Form int
+	const (
+		NFC Form = iota
+		NFD
+		NFKC
+		NFKD
+	)
+	func (f Form) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error)
+	//	Transform() implements the Transform method of the transform.Transformer interface.
+
+	NFC = Unicode Normalization Form C: Compose
+	NFD = Unicode Normalization Form D: Decompose
+
+	Normalization Forms:
+	Form                         | Description
+	---------------------------- | -----------
+	Normalization Form D (NFD)   | Canonical Decomposition
+	Normalization Form C (NFC)   | Canonical Decomposition, followed by Canonical Composition
+	Normalization Form KD (NFKD) | Compatibility Decomposition
+	Normalization Form KC (NFKC) | Compatibility Decomposition, followed by Canonical Composition
+	*/
+	out, _, err = transform.String(transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC), in)
+
+	return
+}//removeDiacritics()
+
+func validForCamelCase(r rune, bFirstChar bool) (bValid bool) {
+	if isAscii(r) {
+		//	digits are invalid if bFirstChar
+		if unicode.IsDigit(r) {
+			bValid = !bFirstChar
+		} else if unicode.IsLetter(r) {
+			bValid = true
+		}
+	}
+
+	return
+}
+
+/*
+func TestCamelCase(in string) (out string, err error) {
+	var (
+		myBool	bool
+		myRune	rune
+		modifiedRune rune
+	)
+
+	myRune = '~'
+	myBool = isAscii(myRune)
+	fmt.Printf("isAscii('%c') = %v\n", myRune, myBool)
+
+	myRune = '¡'
+	myBool = isAscii(myRune)
+	fmt.Printf("isAscii('%c') = %v\n", myRune, myBool)
+	/ *RESULT
+	isAscii('~') = true
+	isAscii('¡') = false
+	* /
+
+	/ *	look into using  unicode.SimpleFold() to convert say ä to a.
+		I doubt this is what I need, but just curious to see what it returns for ä.
+	* /
+	myRune = 'ä'
+	modifiedRune = myRune
+	fmt.Printf("modifiedRune = '%c'\n", modifiedRune)
+	for {
+		modifiedRune = unicode.SimpleFold(modifiedRune)
+		fmt.Printf("modifiedRune = '%c'\n", modifiedRune)
+		
+		if modifiedRune == myRune {
+			break
+		}
+	}
+	/ *RESULT
+	modifiedRune = 'ä'
+	modifiedRune = 'Ä'
+	modifiedRune = 'ä'
+	* /
+
+	if out, err = removeDiacritics(in); nil != err {
+		err = fmt.Errorf(`utils.removeDiacritics() failed: %w`, err)
+	}
+
+	return
+}//CamelCase()
+*/
+func CamelCase(in string) (out string, err error) {
+	/*	bFirstChar will remain true until the first valid rune is encountered (i.e. must be ASCII letter).
+		That rune will be lowercased before being written to the output builder, and bFirstChar will be set to false
+		and remain false thereafter.
+		bCapitalizeNext will be set to true whenever an invalid rune is discarded AND bFirstChar is false.
+		when a valid run is encountered while bCapitalizeNext is true, that rune will be uppercased
+	*/
+	var (
+		bFirstChar		bool = true
+		bCapitalizeNext	bool
+		builder			strings.Builder
+	)
+
+	if in, err = removeDiacritics(in); nil == err {
+		for _, r := range in {
+			if validForCamelCase(r, bFirstChar) {
+				if bFirstChar {
+					builder.WriteRune(unicode.ToLower(r))
+					bFirstChar = false
+				} else {
+					if bCapitalizeNext {
+						r = unicode.ToUpper(r)
+						bCapitalizeNext = false
+					}
+					builder.WriteRune(r)
+				}
+			} else {
+				if !bFirstChar {
+					bCapitalizeNext = true
+				}
+			}
+		}
+
+		out = builder.String()
+	} else {
+		err = fmt.Errorf(`utils.removeDiacritics() failed: %w`, err)
+	}
+
+	return
+}//CamelCase()
 
 /*	Determine the number of digits consumed by an unsigned integer.  This is useful for determining
 	the number of characters to reserve for such things as an incrementing numeric suffix, etc.
