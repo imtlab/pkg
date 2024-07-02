@@ -3,9 +3,11 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"math/rand"
+	"os/exec"
 	"path"
 	"time"
 	"strconv"
@@ -16,6 +18,8 @@ import (
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/imtlab/pkg/loggers"
 )
 
 func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
@@ -502,3 +506,75 @@ func getPaths() {
 	}
 }
 */
+
+/*	WARNING: This expects that loggers has been Init'ed
+	ADDENDUM 2024-07-01:
+		No longer important now that the loggers package has an init() that sets its exported
+		Info, Warning, and Error pointers to log.Default().
+*/
+func ExecuteCommand(p *exec.Cmd) (err error) {
+	//\\//	establish the pipes
+	//func (c *Cmd) StdoutPipe() (io.ReadCloser, error)
+	var stdout io.ReadCloser
+	if stdout, err = p.StdoutPipe(); nil == err {
+		//func (c *Cmd) StderrPipe() (io.ReadCloser, error)
+		var stderr io.ReadCloser
+		if stderr, err = p.StderrPipe(); nil == err {
+			//\\//	start the command
+			//func (c *Cmd) Start() error
+			if err = p.Start(); nil == err {
+				//\\//	slurp STDOUT and STDERR
+				//func ReadAll(r Reader) ([]byte, error)
+				var xBytesStdout []byte
+				if xBytesStdout, err = io.ReadAll(stdout); nil == err {
+					var xBytesStderr []byte
+					if xBytesStderr, err = io.ReadAll(stderr); nil == err {
+						//\\//	wait for completion
+						//func (c *Cmd) Wait() error
+						if err = p.Wait(); err == nil {
+							/*	If the process was started successfully, Wait() will populate p.ProcessState when the command completes.
+								ProcessState *os.ProcessState
+
+								//func (p *ProcessState) Success() bool
+								Success() reports whether the program exited successfully, such as with exit status 0 on Unix.
+
+								//func (p *ProcessState) ExitCode() int
+								ExitCode() returns the exit code of the exited process, or -1 if the process hasn't exited or was terminated by a signal.
+							*/
+							/*	Since p.Wait() didn't return an error, then p.ProcessState.ExitCode() == 0
+								and p.ProcessState.Success() == true.
+								Regard any stderr output as indicative of an error, even though the ExitCode is 0.
+							*/
+							if 0 != len(xBytesStderr) {
+								err = fmt.Errorf(`stderr: %s`, string(xBytesStderr))
+							}
+						} else {
+							if 0 == len(xBytesStderr) {
+								err = fmt.Errorf(`p.Wait() failed: %w`, err)
+							} else {
+								err = fmt.Errorf(`p.Wait() failed: %w; stderr: %s`, err, string(xBytesStderr))
+							}
+						}
+
+						if 0 != len(xBytesStdout) {
+							loggers.Info.Printf(`stdout: %s`, string(xBytesStdout))
+						}
+					} else {
+						err = fmt.Errorf(`io.ReadAll(stderr) failed: %w`, err)
+					}
+				} else {
+					err = fmt.Errorf(`io.ReadAll(stdout) failed: %w`, err)
+				}
+			} else {
+				err = fmt.Errorf(`p.Start() failed: %w`, err)
+			}
+		} else {
+			err = fmt.Errorf(`p.StderrPipe() failed: %w`, err)
+		}
+	} else {
+		err = fmt.Errorf(`p.StdoutPipe(): %w`, err)
+	}
+
+	return
+}//ExecuteCommand()
+

@@ -13,9 +13,26 @@ var (
 //	Trace	*log.Logger
 )
 
-func Init(infoHandle io.Writer, warningHandle io.Writer, errorHandle io.Writer/*, traceHandle io.Writer*/) {
-	Info	= log.New(infoHandle, "INFO: ", log.Ldate|log.Ltime/*|log.LUTC*/)
-	Warning	= log.New(warningHandle, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
-	Error	= log.New(errorHandle, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
-//	Trace	= log.New(traceHandle, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile/*|log.LUTC*/)
+func init() {
+	/*	This will enable calls to loggers.(Info|Warning|Error).Whatever() to work as if log.Whatever() was called
+		until Init() is called.
+	*/
+	p := log.Default()
+	Info	= p
+	Warning	= p
+	Error	= p
+//	Trace	= p
+}
+
+func Init(infoWriter io.Writer, warningWriter io.Writer, errorWriter io.Writer/*, traceWriter io.Writer*//*, bUTC bool*/) {
+	flags := log.LstdFlags	//	LstdFlags = Ldate | Ltime
+/*	if bUTC {
+		flags |= log.LUTC
+	}
+*/
+	//func New(out io.Writer, prefix string, flag int) *Logger
+	Info	= log.New(infoWriter, `INFO: `, flags)
+	Warning	= log.New(warningWriter, `WARNING: `, flags|log.Lshortfile)
+	Error	= log.New(errorWriter, `ERROR: `, flags|log.Lshortfile)
+//	Trace	= log.New(traceWriter, `TRACE: `, flags|log.Lshortfile)
 }
