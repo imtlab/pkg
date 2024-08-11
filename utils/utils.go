@@ -512,7 +512,7 @@ func getPaths() {
 		No longer important now that the loggers package has an init() that sets its exported
 		Info, Warning, and Error pointers to log.Default().
 */
-func ExecuteCommand(p *exec.Cmd) (err error) {
+func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (err error) {
 	//\\//	establish the pipes
 	//func (c *Cmd) StdoutPipe() (io.ReadCloser, error)
 	var stdout io.ReadCloser
@@ -530,34 +530,38 @@ func ExecuteCommand(p *exec.Cmd) (err error) {
 					var xBytesStderr []byte
 					if xBytesStderr, err = io.ReadAll(stderr); nil == err {
 						//\\//	wait for completion
+						/*	If the process was started successfully, Wait() will populate p.ProcessState when the command completes.
+							ProcessState *os.ProcessState
+
+							//func (p *ProcessState) Success() bool
+							Success() reports whether the program exited successfully, such as with exit status 0 on Unix.
+
+							//func (p *ProcessState) ExitCode() int
+							ExitCode() returns the exit code of the exited process, or -1 if the process hasn't exited or was terminated by a signal.
+						*/
+						/*	Since p.Wait() didn't return an error, then p.ProcessState.ExitCode() == 0
+							and p.ProcessState.Success() == true.
+							Regard any stderr output as indicative of an error, even though the ExitCode is 0.
+						*/
 						//func (c *Cmd) Wait() error
-						if err = p.Wait(); err == nil {
-							/*	If the process was started successfully, Wait() will populate p.ProcessState when the command completes.
-								ProcessState *os.ProcessState
-
-								//func (p *ProcessState) Success() bool
-								Success() reports whether the program exited successfully, such as with exit status 0 on Unix.
-
-								//func (p *ProcessState) ExitCode() int
-								ExitCode() returns the exit code of the exited process, or -1 if the process hasn't exited or was terminated by a signal.
-							*/
-							/*	Since p.Wait() didn't return an error, then p.ProcessState.ExitCode() == 0
-								and p.ProcessState.Success() == true.
-								Regard any stderr output as indicative of an error, even though the ExitCode is 0.
-							*/
-							if 0 != len(xBytesStderr) {
-								err = fmt.Errorf(`stderr: %s`, string(xBytesStderr))
-							}
-						} else {
-							if 0 == len(xBytesStderr) {
-								err = fmt.Errorf(`p.Wait() failed: %w`, err)
-							} else {
-								err = fmt.Errorf(`p.Wait() failed: %w; stderr: %s`, err, string(xBytesStderr))
-							}
+						if err = p.Wait(); err != nil {
+							err = fmt.Errorf(`p.Wait() failed: exit code: %d; error: %w`, p.ProcessState.ExitCode(), err)
 						}
 
 						if 0 != len(xBytesStdout) {
 							loggers.Info.Printf(`stdout: %s`, string(xBytesStdout))
+						}
+
+						if 0 != len(xBytesStderr) {
+							if bErrIfStderr {
+								if nil == err {
+									err = fmt.Errorf(`stderr: %s`, string(xBytesStderr))
+								} else {
+									err = fmt.Errorf(`error: %w; stderr: %s`, err, string(xBytesStderr))
+								}
+							} else {
+								loggers.Warning.Printf(`stderr: %s`, string(xBytesStderr))
+							}
 						}
 					} else {
 						err = fmt.Errorf(`io.ReadAll(stderr) failed: %w`, err)
