@@ -414,12 +414,24 @@ func EuclidGCD(p, q uint) uint {
 }
 */
 //	Generic version
-func EuclidGCD[T constraints.Integer](p, q T) T {
+/*	Q:	Would this work for negative integers?
+	A:	(So far not needed)
+*/
+func EuclidGCD[T constraints.Unsigned](p, q T) T {
 	for 0 != q {
 		p, q = q, p % q
 	}
 
 	return p
+}
+
+func Ceiling[T constraints.Unsigned](dividend, divisor T) (quotient T) {
+	quotient = dividend / divisor
+	if remainder := dividend % divisor; 0 != remainder {
+		quotient++
+	}
+
+	return
 }
 
 func Plural[T constraints.Integer](count T) (plural string) {
@@ -512,23 +524,23 @@ func getPaths() {
 		No longer important now that the loggers package has an init() that sets its exported
 		Info, Warning, and Error pointers to log.Default().
 */
-func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (err error) {
+func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (stdout string, err error) {
 	//\\//	establish the pipes
 	//func (c *Cmd) StdoutPipe() (io.ReadCloser, error)
-	var stdout io.ReadCloser
-	if stdout, err = p.StdoutPipe(); nil == err {
+	var rcStdout io.ReadCloser
+	if rcStdout, err = p.StdoutPipe(); nil == err {
 		//func (c *Cmd) StderrPipe() (io.ReadCloser, error)
-		var stderr io.ReadCloser
-		if stderr, err = p.StderrPipe(); nil == err {
+		var rcStderr io.ReadCloser
+		if rcStderr, err = p.StderrPipe(); nil == err {
 			//\\//	start the command
 			//func (c *Cmd) Start() error
 			if err = p.Start(); nil == err {
 				//\\//	slurp STDOUT and STDERR
 				//func ReadAll(r Reader) ([]byte, error)
 				var xBytesStdout []byte
-				if xBytesStdout, err = io.ReadAll(stdout); nil == err {
+				if xBytesStdout, err = io.ReadAll(rcStdout); nil == err {
 					var xBytesStderr []byte
-					if xBytesStderr, err = io.ReadAll(stderr); nil == err {
+					if xBytesStderr, err = io.ReadAll(rcStderr); nil == err {
 						//\\//	wait for completion
 						/*	If the process was started successfully, Wait() will populate p.ProcessState when the command completes.
 							ProcessState *os.ProcessState
@@ -549,7 +561,8 @@ func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (err error) {
 						}
 
 						if 0 != len(xBytesStdout) {
-							loggers.Info.Printf(`stdout: %s`, string(xBytesStdout))
+							stdout = string(xBytesStdout)
+							loggers.Info.Printf(`stdout: %s`, stdout)
 						}
 
 						if 0 != len(xBytesStderr) {
@@ -564,10 +577,10 @@ func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (err error) {
 							}
 						}
 					} else {
-						err = fmt.Errorf(`io.ReadAll(stderr) failed: %w`, err)
+						err = fmt.Errorf(`io.ReadAll(rcStderr) failed: %w`, err)
 					}
 				} else {
-					err = fmt.Errorf(`io.ReadAll(stdout) failed: %w`, err)
+					err = fmt.Errorf(`io.ReadAll(rcStdout) failed: %w`, err)
 				}
 			} else {
 				err = fmt.Errorf(`p.Start() failed: %w`, err)
