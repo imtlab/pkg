@@ -239,7 +239,7 @@ func TestCamelCase(in string) (out string, err error) {
 	for {
 		modifiedRune = unicode.SimpleFold(modifiedRune)
 		fmt.Printf("modifiedRune = '%c'\n", modifiedRune)
-		
+
 		if modifiedRune == myRune {
 			break
 		}

@@ -3,6 +3,7 @@ package loggers
 import (
 	"log"
 	"io"
+	"os"
 )
 
 var (
@@ -17,11 +18,14 @@ func init() {
 	/*	This will enable calls to loggers.(Info|Warning|Error).Whatever() to work as if log.Whatever() was called
 		until Init() is called.
 	*/
-	p := log.Default()
+/*	p := log.Default()
 	Info	= p
 	Warning	= p
 	Error	= p
 //	Trace	= p
+*/
+	//	Better yet, let's just do this to tide us over until the "main" package (possibly) calls Init() with different arguments.
+	Init(os.Stdout, os.Stdout, os.Stderr)
 }
 
 func Init(infoWriter io.Writer, warningWriter io.Writer, errorWriter io.Writer/*, traceWriter io.Writer*//*, bUTC bool*/) {
