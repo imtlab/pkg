@@ -298,6 +298,53 @@ func CamelCase(in string) (out string, err error) {
 	return
 }//CamelCase()
 
+func CamelSnakeCase(in string) (camel, snake string, err error) {
+	/*	bFirstChar will remain true until the first valid rune is encountered (i.e. must be ASCII letter).
+		That rune will be lowercased before being written to the output builderCamel, and bFirstChar will be set to false
+		and remain false thereafter.
+		bCapitalizeNext will be set to true whenever an invalid rune is discarded AND bFirstChar is false.
+		when a valid run is encountered while bCapitalizeNext is true, that rune will be uppercased
+	*/
+	var (
+		bFirstChar		bool = true
+		bCapitalizeNext	bool
+		builderCamel	strings.Builder
+		builderSnake	strings.Builder
+	)
+
+	if in, err = removeDiacritics(in); nil == err {
+		for _, r := range in {
+			if validForCamelCase(r, bFirstChar) {
+				if bFirstChar {
+					r = unicode.ToLower(r)
+					builderCamel.WriteRune(r)
+					builderSnake.WriteRune(r)
+					bFirstChar = false
+				} else {
+					if bCapitalizeNext {
+						builderSnake.WriteRune('_')
+						r = unicode.ToUpper(r)
+						bCapitalizeNext = false
+					}
+					builderCamel.WriteRune(r)
+					builderSnake.WriteRune(r)
+				}
+			} else {
+				if !bFirstChar {
+					bCapitalizeNext = true
+				}
+			}
+		}
+
+		camel = builderCamel.String()
+		snake = strings.ToLower(builderSnake.String())
+	} else {
+		err = fmt.Errorf(`utils.removeDiacritics() failed: %w`, err)
+	}
+
+	return
+}//CamelCase()
+
 /*	Determine the number of digits consumed by an unsigned integer.  This is useful for determining
 	the number of characters to reserve for such things as an incrementing numeric suffix, etc.
 */
@@ -404,6 +451,9 @@ func IsExactUint64(f64 float64) (value uint64, exact bool) {
 	return
 }
 
+/*	Non-recursive implementation of Euclid's algorithm for finding the greatest common divisor of two numbers.
+	Used for reducing a fractions to its lowest form.
+*/
 /*
 func EuclidGCD(p, q uint) uint {
 	for 0 != q {
