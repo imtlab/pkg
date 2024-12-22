@@ -388,7 +388,7 @@ func Extension(fn string, extLimit int) string {
 	ext	:= path.Ext(fn)
 	extLen := len(ext)
 	if (0 == extLen) || (extLimit < extLen) {
-		return ""
+		return ``
 	}
 	return ext
 }
@@ -406,7 +406,7 @@ func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
 	extLen := len(extension)
 	if (0 == extLen) || (extLimit < extLen) {
 		baseName = filename
-		extension = ""
+		extension = ``
 	} else {
 		baseName = filename[0:len(filename)-extLen]
 	}
@@ -487,6 +487,32 @@ func Ceiling[T constraints.Unsigned](dividend, divisor T) (quotient T) {
 func Plural[T constraints.Integer](count T) (plural string) {
 	if 1 != count {
 		plural = `s`
+	}
+
+	return
+}
+
+//<<<<	POSSIBLE TO DO?: Use generics to support any unsigned integer bit depth
+func ValidateUint(input string, defaultValue uint) (output uint, err error) {
+	if input = strings.TrimSpace(input); 0 == len(input) {
+		output = defaultValue
+	} else {
+		//func ParseUint(s string, base int, bitSize int) (uint64, error)
+		var parsedValue uint64
+		if parsedValue, err = strconv.ParseUint(input, 10, 0); nil == err {
+			output = uint(parsedValue)
+		}
+	}
+
+	return
+}
+
+func ValidateBool(input string, defaultValue bool) (output bool, err error) {
+	if input = strings.TrimSpace(input); 0 == len(input) {
+		output = defaultValue
+	} else {
+		//func ParseBool(str string) (bool, error)
+		output, err = strconv.ParseBool(input)
 	}
 
 	return
