@@ -22,7 +22,17 @@ import (
 	"github.com/imtlab/pkg/loggers"
 )
 
-func ComputeProgressDivisor(itemCount int, maxIndicatorCount int) int {
+/*
+func ComputeProgressDivisor(itemCount, maxIndicatorCount int) int {
+	quotient := itemCount / maxIndicatorCount
+	if 0 != itemCount % maxIndicatorCount {
+		quotient++
+	}
+	return quotient
+}
+*/
+//	Generic version
+func ComputeProgressDivisor[T constraints.Integer](itemCount, maxIndicatorCount T) T {
 	quotient := itemCount / maxIndicatorCount
 	if 0 != itemCount % maxIndicatorCount {
 		quotient++
@@ -413,9 +423,9 @@ func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
 	return
 }
 
-func ErrorsToMessages(xerr []error) (xMessages []string) {
-	xMessages = make([]string, len(xerr))
-	for index := range xerr {
+func ErrorsToMessages(xErrors []error) (xMessages []string) {
+	xMessages = make([]string, len(xErrors))
+	for index := range xErrors {
 		/*	For the standard Go compiler, the internal structure of any string type is declared like:
 			type _string struct {
 				elements	*byte	//	underlying bytes
@@ -427,7 +437,7 @@ func ErrorsToMessages(xerr []error) (xMessages []string) {
 		only when a new value is assigned to a string.  So I expect that the following assignment
 		does not cause all the bytes in the string's array to be duplicated in memory.
 		*/
-		xMessages[index] = xerr[index].Error()
+		xMessages[index] = xErrors[index].Error()
 	}
 
 	return
