@@ -1,3 +1,3 @@
 module github.com/imtlab/pkg/urlquerybuilder
 
-go 1.21
+go 1.26.0

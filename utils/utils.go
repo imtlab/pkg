@@ -382,6 +382,7 @@ func BaseName(fn string, extLimit int) string {
 		The extension is the suffix beginning at the final dot in the final slash-separated element of path;
 		it is empty if there is no dot.
 	*/
+	//	Possible TO DO:  To avoid a filename like .DS_Store being treated as an extension with no base filaname?
 	ext	:= path.Ext(fn)
 	extLen := len(ext)
 	if (0 == extLen) || (extLimit < extLen) {
@@ -395,6 +396,7 @@ func Extension(fn string, extLimit int) string {
 		there is no extension, but path.Ext() would return ". Smith Goes to Washington" as the extension;
 		This method will suppress returning any "extension" longer than extLimit.
 	*/
+	//	Possible TO DO:  To avoid a filename like .DS_Store being treated as an extension with no base filaname?
 	ext	:= path.Ext(fn)
 	extLen := len(ext)
 	if (0 == extLen) || (extLimit < extLen) {
@@ -412,6 +414,7 @@ func FilenameSplit(filename string, extLimit int) (baseName, extension string) {
 		The extension is the suffix beginning at the final dot in the final slash-separated element of path;
 		it is empty if there is no dot.
 	*/
+	//	Possible TO DO:  To avoid a filename like .DS_Store being treated as an extension with no base filaname?
 	extension = path.Ext(filename)
 	extLen := len(extension)
 	if (0 == extLen) || (extLimit < extLen) {
@@ -680,4 +683,3 @@ func ExecuteCommand(p *exec.Cmd, bErrIfStderr bool) (stdout string, err error) {
 
 	return
 }//ExecuteCommand()
-

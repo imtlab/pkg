@@ -26,6 +26,7 @@ func init() {
 */
 	//	Better yet, let's just do this to tide us over until the "main" package (possibly) calls Init() with different arguments.
 	Init(os.Stdout, os.Stdout, os.Stderr)
+	Info.Println(`Executing loggers.init()`)
 }
 
 func Init(infoWriter io.Writer, warningWriter io.Writer, errorWriter io.Writer/*, traceWriter io.Writer*//*, bUTC bool*/) {
