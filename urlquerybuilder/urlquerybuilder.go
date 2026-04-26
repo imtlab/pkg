@@ -1,3 +1,5 @@
+//	DEPRECATED.  Use url.Values from the standard library instead: https://pkg.go.dev/net/url#Values
+
 //	Package urlquerybuilder provides a handy way to build up URL Query strings.
 package urlquerybuilder
 

@@ -207,11 +207,11 @@ func (m TEnvVarMap) Validate() (err error) {
 					}
 				}
 			} else {
-				err = fmt.Errorf(`Missing lambda runtime environemnt variables: %s`, strings.Join(xMissing, `, `))
+				err = fmt.Errorf(`Missing lambda runtime environment variables: %s`, strings.Join(xMissing, `, `))
 			}
 		}//needsEncryption
 	} else {
-		err = fmt.Errorf(`Missing configured environemnt variables: %s`, strings.Join(xMissing, `, `))
+		err = fmt.Errorf(`Missing configured environment variables: %s`, strings.Join(xMissing, `, `))
 	}
 
 	return

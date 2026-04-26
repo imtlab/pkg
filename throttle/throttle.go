@@ -11,12 +11,12 @@ import (
 
 type TThrottle struct {
 	sync.Mutex
-	limit		int
+	limit		uint
 	duration	time.Duration
 	fifo		chan time.Time
 }
 
-func (p *TThrottle) Init(numeratorLimit int, denominatorSeconds int) {
+func (p *TThrottle) Init(numeratorLimit uint, denominatorSeconds uint) {
 	p.limit = numeratorLimit
 	p.duration = time.Second * time.Duration(denominatorSeconds)
 	p.fifo = make(chan time.Time, numeratorLimit)
@@ -29,7 +29,7 @@ func (p *TThrottle) GetSleepDuration() (dur time.Duration) {
 	p.Lock()
 	now := time.Now()	//	latch this instant
 
-	if(p.limit == len(p.fifo)) {
+	if p.limit == uint(len(p.fifo)) {
 		//	remove the oldest instant from p.fifo and compute the instant of the next allowable call
 		next := (<-p.fifo).Add(p.duration)
 
