@@ -76,7 +76,7 @@ func Sleep(timeStarted time.Time, durationSleep time.Duration) {
 
 func XStringFromXInt(xi []int) []string {
 	/*	What a drag that we have create a slice of string from the slice of int
-		If only there was a strings.Join(a []interface{}, sep string) that would internally call the interface's String() method.
+		If only there was a strings.Join(a []any, sep string) that would internally call the interface's String() method.
 	*/
 	//	Create a string slice using strconv.Itoa().  Itoa is shorthand for FormatInt(int64(i), 10).
 	xs := make([]string, 0, len(xi))

@@ -12,6 +12,7 @@ var (
 	Warning	*log.Logger
 	Error	*log.Logger
 //	Trace	*log.Logger
+	//	I sometimes wish I had a DEBUG logger separate from Info
 )
 
 func init() {
