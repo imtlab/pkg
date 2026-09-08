@@ -1,3 +1,6 @@
+/*	Package sharedstate provides a synchronizable type with methods used to accumulate progress
+	and un-scoped errors and warnings destined for iconoik Jobs.
+*/
 package sharedstate
 
 import (
@@ -29,13 +32,15 @@ var (
 */
 type TSharedState struct {
 						sync.RWMutex	//	embedded struct
-	JobProgressTotal	uint64
-	JobProgress			uint64
+	JobProgressTotal	uint64		//	to be shortened to ProgressTotal (and all its methods)?
+	JobProgress			uint64		//	to be shortened to Progress (and all its methods)?
 	errors				[]error
 	warnings			[]string
 }
 
-/* not needed because only the producer (which is only 1 go routine) will update, so no concurrency.
+//\\//	methods for working with the "JobProgress" field
+
+/* not needed because only the producer (which is only 1 go routine) will update JobProgress, so no concurrency.
 func (p *TSharedState) SetJobProgress(progress uint64) {
 	p.RLock()
 	p.JobProgress = progress
@@ -43,6 +48,7 @@ func (p *TSharedState) SetJobProgress(progress uint64) {
 }
 */
 
+/*<<<<	COMMENTED OUT just to determine if these two are used anywhere
 func (p *TSharedState) IncrementJobProgress() {
 	p.RLock()
 	p.JobProgress++
@@ -55,6 +61,20 @@ func (p *TSharedState) GetJobProgress() (value uint64) {
 	p.RUnlock()
 	return
 }
+*/
+
+/*	If the only time GetJobProgress() is called is immediately after calling IncrementJobProgress()
+	Then they should be combined into one within a single RLock/RUnlock block.
+*/
+func (p *TSharedState) GetIncrementedJobProgress() (value uint64) {
+	p.RLock()
+	p.JobProgress++
+	value = p.JobProgress
+	p.RUnlock()
+	return
+}
+
+//\\//	methods for working with the "errors" field
 
 func (p *TSharedState) AppendError(err error) {
 	p.RLock()
@@ -101,6 +121,25 @@ func (p *TSharedState) JoinedError() (err error) {
 
 	return
 }
+
+//	JoinedErrorMsg() is more efficient than JoinedError() when the caller only wants err.Error() anyway.
+//	not called from concurrent go routines so RLock and RUnlock not needed
+func (p *TSharedState) JoinedErrorMsg() (s string) {
+	if count := len(p.errors); 0 != count {
+//		p.RLock()
+		if 1 == count {
+			s = p.errors[0].Error()
+		} else {
+			//	combine the errors into one
+			s = fmt.Sprintf(`%d errors: %s`, count, strings.Join(utils.ErrorsToMessages(p.errors), `; `))
+		}
+//		p.RUnlock()
+	}
+
+	return
+}
+
+//\\//	methods for working with the "warnings" field
 
 func (p *TSharedState) AppendWarning(s string) {
 	p.RLock()
