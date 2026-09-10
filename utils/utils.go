@@ -497,6 +497,14 @@ func Ceiling[T constraints.Unsigned](dividend, divisor T) (quotient T) {
 	return
 }
 
+func ComputeChunkSize[T constraints.Unsigned](totalSize, maxChunkSize T) T {
+	if chunkCount := Ceiling(totalSize, maxChunkSize); 1 == chunkCount {
+		return totalSize
+	} else {
+		return Ceiling(totalSize, chunkCount)
+	}
+}
+
 func Plural[T constraints.Integer](count T) (plural string) {
 	if 1 != count {
 		plural = `s`
